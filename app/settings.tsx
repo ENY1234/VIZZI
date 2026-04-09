@@ -52,25 +52,11 @@ export default function Settings() {
                       await supabase.from('cards').delete().eq('user_id', user.id);
                       await supabase.from('profiles').delete().eq('id', user.id);
 
-                      // Get session token
-                      const { data: { session } } = await supabase.auth.getSession();
+                      // Call edge function using supabase client (handles auth automatically)
+                      const { error } = await supabase.functions.invoke('delete-user');
 
-                      // Call edge function to delete auth user
-                      const response = await fetch(
-                        'https://qpcukamntnlaqzvcfdxp.supabase.co/functions/v1/delete-user',
-                        {
-                          method: 'POST',
-                          headers: {
-                            'Authorization': `Bearer ${session?.access_token}`,
-                            'Content-Type': 'application/json',
-                          },
-                        }
-                      );
-
-                      const result = await response.json();
-
-                      if (!response.ok) {
-                        throw new Error(result.error || 'Failed to delete account');
+                      if (error) {
+                        throw new Error(error.message || 'Failed to delete account');
                       }
 
                       await supabase.auth.signOut();
