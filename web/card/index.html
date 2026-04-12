@@ -6,80 +6,166 @@
   <title>Vizzi Card</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; background: #0a0a0a; }
     .container { width: 100%; max-width: 400px; text-align: center; }
-    .logo { font-size: 36px; font-weight: 800; letter-spacing: -2px; margin-bottom: 4px; }
+    .logo { font-size: 36px; font-weight: 800; color: #fff; letter-spacing: -2px; margin-bottom: 4px; }
     .logo span { color: #FF5C87; }
-    .tagline { font-size: 13px; margin-bottom: 40px; }
-    .card { border-radius: 20px; padding: 24px; margin-bottom: 32px; text-align: left; position: relative; overflow: hidden; }
-    .card-name { font-size: 22px; font-weight: 700; }
-    .card-title { font-size: 14px; margin-top: 4px; opacity: 0.75; }
-    .card-info { font-size: 14px; margin-top: 10px; display: flex; align-items: center; gap: 8px; }
-    .card-info a { text-decoration: none; }
-    .divider { height: 1px; margin: 16px 0; opacity: 0.2; background: currentColor; }
+    .tagline { color: #555; font-size: 13px; margin-bottom: 40px; }
+    .card { border-radius: 20px; padding: 20px; margin-bottom: 32px; text-align: left; position: relative; overflow: hidden; min-height: 160px; display: flex; flex-direction: column; justify-content: space-between; }
+    .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
+    .card-vizzi { font-size: 10px; font-weight: bold; letter-spacing: 1px; }
+    .card-name { font-size: 20px; font-weight: 700; }
+    .card-role { font-size: 11px; margin-top: 3px; }
+    .card-contacts { margin-top: 6px; }
+    .contact-row { display: flex; align-items: center; gap: 5px; margin-top: 4px; font-size: 8px; opacity: 0.7; }
+    .divider { height: 1px; width: 28px; margin: 6px 0; }
     .btn { display: block; padding: 16px; border-radius: 14px; font-size: 15px; font-weight: 700; text-align: center; text-decoration: none; margin-bottom: 12px; cursor: pointer; border: none; width: 100%; }
     .btn-primary { background: #FF5C87; color: #fff; }
     .btn-secondary { background: transparent; color: #555; font-size: 13px; }
-    .loading { font-size: 14px; }
-
-    /* CLASSIC */
-    .layout-classic { color: #fff; }
-    .layout-classic .card-name { font-size: 24px; }
-
-    /* MINIMAL */
-    .layout-minimal { border: 1.5px solid rgba(0,0,0,0.1); }
-
-    /* DARK */
-    .layout-dark { background: #111 !important; color: #fff; }
-    .layout-dark .card-title { color: rgba(255,255,255,0.6); }
-    .layout-dark .card-accent { display: inline-block; width: 32px; height: 4px; border-radius: 2px; margin-bottom: 12px; }
-
-    /* ELEGANT */
-    .layout-elegant { color: #fff; }
-    .layout-elegant .card-name { font-size: 26px; font-weight: 300; letter-spacing: 1px; }
-    .layout-elegant .card-title { letter-spacing: 2px; font-size: 11px; text-transform: uppercase; }
-
-    /* BOLD */
-    .layout-bold { color: #fff; }
-    .layout-bold .card-name { font-size: 28px; font-weight: 900; text-transform: uppercase; letter-spacing: -1px; }
-    .layout-bold .card-title { font-weight: 700; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
-
-    /* SIMPLE */
-    .layout-simple { background: #f8f8f8 !important; color: #111; }
-    .layout-simple .card-title { color: #555; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="logo" id="logo-text">vizzi<span>.</span></div>
-    <div class="tagline" id="tagline">digital business card</div>
-    <div id="content"><p class="loading" style="color:#555">Loading...</p></div>
+    <div class="logo">vizzi<span>.</span></div>
+    <div class="tagline">digital business card</div>
+    <div id="content"><p style="color:#555;font-size:14px">Loading...</p></div>
   </div>
 
   <script>
     const SUPABASE_URL = 'https://qpcukamntnlaqzvcfdxp.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwY3VrYW1udG5sYXF6dmNmZHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTU5NDksImV4cCI6MjA4OTY3MTk0OX0.esegmcvGStbSX8TMTpQ3tHo3SQ-7tJ6iKle8ANHU6Mo';
 
-    const pathParts = window.location.pathname.split('/card/');
-    const id = pathParts[1];
+    const id = window.location.pathname.split('/card/')[1];
 
-    function getBgColor(layout, theme) {
-      if (layout === 'dark') return '#111';
-      if (layout === 'simple') return '#f8f8f8';
-      return theme || '#FF5C87';
+    function isLight(color) {
+      if (['#f8f8f6','#ffffff','#fff','#fef3c7','#fdf2f8'].includes(color)) return true;
+      if (color.startsWith('#')) {
+        const hex = color.replace('#','');
+        const r = parseInt(hex.substring(0,2),16);
+        const g = parseInt(hex.substring(2,4),16);
+        const b = parseInt(hex.substring(4,6),16);
+        return (0.299*r + 0.587*g + 0.114*b)/255 > 0.85;
+      }
+      return false;
     }
 
-    function getTextColor(layout, theme) {
-      if (layout === 'minimal') return '#111';
-      if (layout === 'simple') return '#111';
-      return '#fff';
+    function contacts(card, color) {
+      const items = [
+        { val: card.phone, emoji: '📞' },
+        { val: card.email, emoji: '✉️' },
+        { val: card.address, emoji: '📍' },
+        { val: card.instagram, emoji: '📸', prefix: '@' },
+        { val: card.tiktok, emoji: '🎵', prefix: '@' },
+        { val: card.linkedin, emoji: '💼' },
+        { val: card.whatsapp, emoji: '💬', suffix: ' (WhatsApp)' },
+        { val: card.website, emoji: '🌐' },
+      ];
+      return items.filter(i => i.val).map(i =>
+        `<div class="contact-row" style="color:${color}">
+          <span>${i.emoji}</span>
+          <span>${i.prefix||''}${i.val}${i.suffix||''}</span>
+        </div>`
+      ).join('');
     }
 
-    function setPageColors(layout, theme) {
-      const isDark = ['classic','dark','elegant','bold'].includes(layout);
-      document.body.style.background = isDark ? '#0a0a0a' : '#f5f5f5';
-      document.getElementById('logo-text').style.color = isDark ? '#fff' : '#111';
-      document.getElementById('tagline').style.color = isDark ? '#555' : '#888';
+    function renderCard(card) {
+      const layout = card.layout || 'classic';
+      const theme = card.theme || '#FF5C87';
+      const light = isLight(theme);
+      const textColor = light ? '#111' : '#fff';
+      const subColor = light ? '#666' : 'rgba(255,255,255,0.6)';
+
+      if (layout === 'classic') {
+        return `
+          <div class="card" style="background:${theme}; border:${light?'1px solid #e0e0e0':'none'}">
+            <div class="card-header">
+              <span class="card-vizzi" style="color:${textColor};opacity:0.25">VIZZI</span>
+            </div>
+            <div>
+              <div class="card-name" style="color:${textColor}">${card.name||''}</div>
+              <div class="card-role" style="color:${subColor}">${card.job_title||''}</div>
+              <div class="card-contacts">${contacts(card, light?'#333':'#fff')}</div>
+            </div>
+          </div>`;
+      }
+
+      if (layout === 'minimal') {
+        return `
+          <div class="card" style="background:${theme}; padding-left:24px; border-left:5px solid ${light?'rgba(0,0,0,0.15)':'rgba(255,255,255,0.25)'}; border-radius:20px">
+            <span class="card-vizzi" style="color:${textColor};opacity:0.2;margin-bottom:16px;display:block">VIZZI</span>
+            <div>
+              <div class="card-name" style="color:${textColor}">${card.name||''}</div>
+              <div class="card-role" style="color:${subColor}">${card.job_title||''}</div>
+              <div class="card-contacts">${contacts(card, light?'#333':'#fff')}</div>
+            </div>
+          </div>`;
+      }
+
+      if (layout === 'dark') {
+        return `
+          <div class="card" style="background:#0a0a0a">
+            <div class="card-header">
+              <span class="card-vizzi" style="color:#333">VIZZI</span>
+            </div>
+            <div>
+              <div class="card-name" style="color:#fff">${card.name||''}</div>
+              <div class="card-role" style="color:${theme}">${card.job_title||''}</div>
+              <div class="card-contacts">${contacts(card, theme)}</div>
+            </div>
+          </div>`;
+      }
+
+      if (layout === 'elegant') {
+        return `
+          <div class="card" style="background:${theme}">
+            <div class="card-header">
+              <span class="card-vizzi" style="color:${textColor};opacity:0.2">VIZZI</span>
+            </div>
+            <div>
+              <div class="card-name" style="color:${textColor};font-style:italic">${card.name||''}</div>
+              <div class="divider" style="background:${light?'rgba(0,0,0,0.2)':'rgba(255,255,255,0.3)'}"></div>
+              <div class="card-role" style="color:${subColor};letter-spacing:2px;text-transform:uppercase;font-size:10px">${card.job_title||''}</div>
+              <div class="card-contacts">${contacts(card, light?'#333':'#fff')}</div>
+            </div>
+          </div>`;
+      }
+
+      if (layout === 'bold') {
+        return `
+          <div class="card" style="background:${theme}">
+            <span class="card-vizzi" style="color:${textColor};opacity:0.2;margin-bottom:16px;display:block">VIZZI</span>
+            <div>
+              <div class="card-name" style="color:${textColor};font-size:22px;font-weight:900">${card.name||''}</div>
+              <div class="card-role" style="color:${subColor};font-weight:700;font-size:11px;letter-spacing:1px;text-transform:uppercase">${card.job_title||''}</div>
+              <div class="card-contacts">${contacts(card, light?'#333':'#fff')}</div>
+            </div>
+          </div>`;
+      }
+
+      if (layout === 'blanc') {
+        return `
+          <div class="card" style="background:#f8f8f6;border:1px solid #e0e0d8">
+            <div class="card-header">
+              <span class="card-vizzi" style="color:#111;opacity:0.2">VIZZI</span>
+            </div>
+            <div>
+              <div class="card-name" style="color:#111">${card.name||''}</div>
+              <div class="card-role" style="color:#666">${card.job_title||''}</div>
+              <div class="card-contacts">${contacts(card, '#333')}</div>
+            </div>
+          </div>`;
+      }
+
+      // simple / default
+      return `
+        <div class="card" style="background:#1a1a1a;border:1px solid #2a2a2a">
+          <span class="card-vizzi" style="color:#333;margin-bottom:16px;display:block">VIZZI</span>
+          <div>
+            <div class="card-name" style="color:${theme}">${card.name||''}</div>
+            <div class="card-role" style="color:#555">${card.job_title||''}</div>
+            <div class="card-contacts">${contacts(card, '#555')}</div>
+          </div>
+        </div>`;
     }
 
     async function loadCard() {
@@ -100,32 +186,8 @@
         return;
       }
 
-      const layout = card.layout || 'classic';
-      const theme = card.theme || '#FF5C87';
-      const bgColor = getBgColor(layout, theme);
-      const textColor = getTextColor(layout, theme);
-
-      setPageColors(layout, theme);
-
-      const accentColor = layout === 'dark' ? theme : 'rgba(255,255,255,0.3)';
-      const infoColor = layout === 'minimal' || layout === 'simple' ? '#555' : 'rgba(255,255,255,0.85)';
-
       document.getElementById('content').innerHTML = `
-        <div class="card layout-${layout}" style="background:${bgColor}; color:${textColor}">
-          ${layout === 'dark' ? `<div class="card-accent" style="background:${theme}"></div>` : ''}
-          ${layout === 'bold' ? `<div style="position:absolute;right:-20px;top:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.08)"></div>` : ''}
-          <div class="card-name">${card.name || ''}</div>
-          <div class="card-title" style="color:${layout === 'dark' ? 'rgba(255,255,255,0.6)' : layout === 'minimal' || layout === 'simple' ? '#888' : 'rgba(255,255,255,0.75)'}">${card.job_title || ''}</div>
-          <div class="divider"></div>
-          ${card.phone ? `<div class="card-info" style="color:${infoColor}">📞 <span>${card.phone}</span></div>` : ''}
-          ${card.email ? `<div class="card-info" style="color:${infoColor}">✉️ <span>${card.email}</span></div>` : ''}
-          ${card.address ? `<div class="card-info" style="color:${infoColor}">📍 <span>${card.address}</span></div>` : ''}
-          ${card.website ? `<div class="card-info" style="color:${infoColor}">🌐 <a href="${card.website}" style="color:${infoColor}">${card.website}</a></div>` : ''}
-          ${card.instagram ? `<div class="card-info" style="color:${infoColor}">📸 <a href="https://instagram.com/${card.instagram}" style="color:${infoColor}">@${card.instagram}</a></div>` : ''}
-          ${card.linkedin ? `<div class="card-info" style="color:${infoColor}">💼 <a href="${card.linkedin}" style="color:${infoColor}">${card.linkedin}</a></div>` : ''}
-          ${card.whatsapp ? `<div class="card-info" style="color:${infoColor}">💬 <a href="https://wa.me/${card.whatsapp}" style="color:${infoColor}">WhatsApp</a></div>` : ''}
-          ${card.tiktok ? `<div class="card-info" style="color:${infoColor}">🎵 <a href="https://tiktok.com/@${card.tiktok}" style="color:${infoColor}">@${card.tiktok}</a></div>` : ''}
-        </div>
+        ${renderCard(card)}
         <a class="btn btn-primary" href="vizzi://card/${id}">Open in Vizzi app</a>
         <a class="btn btn-secondary" href="https://dancing-bavarois-5ae1b1.netlify.app">Get the Vizzi app</a>
       `;
