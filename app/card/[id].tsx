@@ -59,7 +59,7 @@ export default function CardWebPage() {
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={() => Linking.openURL('https://vizzi.vercel.app')}
+        onPress={() => Linking.openURL('https://vizzi-jxy7krapt-eny1234s-projects.vercel.app')}
         style={{ padding: 12 }}>
         <Text style={{ color: '#555', fontSize: 13 }}>Get the Vizzi app</Text>
       </TouchableOpacity>

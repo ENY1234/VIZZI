@@ -20,7 +20,7 @@ export default function CardReady() {
   const [showSaveToGroup, setShowSaveToGroup] = useState(false);
   const [isPublic, setIsPublic] = useState(true);
 
-  const cardLink = `https://vizzi.app/card/${cardId}`;
+  const cardLink = `vizzi://card/${cardId}`;
 
   useEffect(() => {
     async function getCard() {

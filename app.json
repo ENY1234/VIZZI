@@ -11,7 +11,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.vizzi.app",
-      "associatedDomains": ["applinks:vizzi.vercel.app"]
+      "associatedDomains": ["applinks:vizzi-jxy7krapt-eny1234s-projects.vercel.app"]
     },
     "android": {
       "adaptiveIcon": {
@@ -30,7 +30,7 @@
           "data": [
             {
               "scheme": "https",
-              "host": "vizzi.vercel.app",
+              "host": "vizzi-jxy7krapt-eny1234s-projects.vercel.app",
               "pathPrefix": "/card"
             }
           ],
