@@ -2,7 +2,14 @@
   "buildCommand": "npx expo export --platform web",
   "outputDirectory": "dist",
   "rewrites": [
-    { "source": "/card/:path*", "destination": "/index.html" },
     { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    }
   ]
 }
