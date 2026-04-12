@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import BottomNav from './components/BottomNav';
 import CardPreview from './components/CardPreview';
 import { useTheme } from './context/ThemeContext';
@@ -31,6 +31,7 @@ export default function Home() {
   const [nearbyUsers, setNearbyUsers] = useState<any[]>([]);
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [locationDenied, setLocationDenied] = useState(false);
+  const [locationAsked, setLocationAsked] = useState(false);
 
   const cardColors = ['#FF5C87', '#3B82F6', '#10B981', '#FFBA00', '#A855F7', '#06b6d4'];
 
@@ -42,24 +43,54 @@ export default function Home() {
   );
 
   async function requestLocation() {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      setLocationDenied(true);
-      return;
-    }
+  const { status: existing } = await Location.getForegroundPermissionsAsync();
+  if (existing === 'granted') {
     const loc = await Location.getCurrentPositionAsync({});
     const lat = loc.coords.latitude;
     const lon = loc.coords.longitude;
     setUserLocation({ lat, lon });
-
-    // Save location to profile
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       await supabase.from('profiles').update({ latitude: lat, longitude: lon }).eq('id', user.id);
     }
-
     loadNearby(lat, lon);
+    return;
   }
+
+  if (!locationAsked) {
+    setLocationAsked(true);
+    Alert.alert(
+      'See people near you 📍',
+      'Allow Vizzi to use your location to show you people nearby.',
+      [
+        {
+          text: 'Not now',
+          style: 'cancel',
+          onPress: () => setLocationDenied(true),
+        },
+        {
+          text: 'Allow',
+          onPress: async () => {
+            const { status } = await Location.requestForegroundPermissionsAsync();
+            if (status !== 'granted') {
+              setLocationDenied(true);
+              return;
+            }
+            const loc = await Location.getCurrentPositionAsync({});
+            const lat = loc.coords.latitude;
+            const lon = loc.coords.longitude;
+            setUserLocation({ lat, lon });
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+              await supabase.from('profiles').update({ latitude: lat, longitude: lon }).eq('id', user.id);
+            }
+            loadNearby(lat, lon);
+          },
+        },
+      ]
+    );
+  }
+}
 
   async function loadData() {
     const { data: { user } } = await supabase.auth.getUser();
