@@ -1,7 +1,13 @@
+import { createClient } from '@supabase/supabase-js';
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Linking, Text, TouchableOpacity, View } from 'react-native';
-import { supabase } from '../supabase';
+
+// Web-safe supabase client (no AsyncStorage)
+const supabaseWeb = createClient(
+  'https://qpcukamntnlaqzvcfdxp.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwY3VrYW1udG5sYXF6dmNmZHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTU5NDksImV4cCI6MjA4OTY3MTk0OX0.esegmcvGStbSX8TMTpQ3tHo3SQ-7tJ6iKle8ANHU6Mo'
+);
 
 export default function CardWebPage() {
   const { id } = useLocalSearchParams();
@@ -11,7 +17,7 @@ export default function CardWebPage() {
   useEffect(() => {
     async function getCard() {
       if (!id) return;
-      const { data } = await supabase.from('cards').select('*').eq('id', id).single();
+      const { data } = await supabaseWeb.from('cards').select('*').eq('id', id).single();
       if (data) setCard(data);
       setLoading(false);
     }
