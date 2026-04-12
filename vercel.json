@@ -1,6 +1,3 @@
 {
-  "outputDirectory": "public",
-  "rewrites": [
-    { "source": "/card/(.*)", "destination": "/card.html" }
-  ]
+  "outputDirectory": "public"
 }
