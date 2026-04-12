@@ -6,69 +6,128 @@
   <title>Vizzi Card</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #0a0a0a; font-family: -apple-system, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px; }
     .container { width: 100%; max-width: 400px; text-align: center; }
-    .logo { font-size: 36px; font-weight: 800; color: #fff; letter-spacing: -2px; margin-bottom: 4px; }
+    .logo { font-size: 36px; font-weight: 800; letter-spacing: -2px; margin-bottom: 4px; }
     .logo span { color: #FF5C87; }
-    .tagline { color: #555; font-size: 13px; margin-bottom: 40px; }
-    .card { border-radius: 20px; padding: 24px; margin-bottom: 32px; text-align: left; }
-    .card-name { color: #fff; font-size: 22px; font-weight: 700; }
-    .card-title { color: rgba(255,255,255,0.7); font-size: 14px; margin-top: 4px; }
-    .card-info { color: #fff; font-size: 14px; margin-top: 12px; }
+    .tagline { font-size: 13px; margin-bottom: 40px; }
+    .card { border-radius: 20px; padding: 24px; margin-bottom: 32px; text-align: left; position: relative; overflow: hidden; }
+    .card-name { font-size: 22px; font-weight: 700; }
+    .card-title { font-size: 14px; margin-top: 4px; opacity: 0.75; }
+    .card-info { font-size: 14px; margin-top: 10px; display: flex; align-items: center; gap: 8px; }
+    .card-info a { text-decoration: none; }
+    .divider { height: 1px; margin: 16px 0; opacity: 0.2; background: currentColor; }
     .btn { display: block; padding: 16px; border-radius: 14px; font-size: 15px; font-weight: 700; text-align: center; text-decoration: none; margin-bottom: 12px; cursor: pointer; border: none; width: 100%; }
     .btn-primary { background: #FF5C87; color: #fff; }
     .btn-secondary { background: transparent; color: #555; font-size: 13px; }
-    .loading { color: #555; font-size: 14px; }
-    .error { color: #fff; font-size: 18px; }
+    .loading { font-size: 14px; }
+
+    /* CLASSIC */
+    .layout-classic { color: #fff; }
+    .layout-classic .card-name { font-size: 24px; }
+
+    /* MINIMAL */
+    .layout-minimal { border: 1.5px solid rgba(0,0,0,0.1); }
+
+    /* DARK */
+    .layout-dark { background: #111 !important; color: #fff; }
+    .layout-dark .card-title { color: rgba(255,255,255,0.6); }
+    .layout-dark .card-accent { display: inline-block; width: 32px; height: 4px; border-radius: 2px; margin-bottom: 12px; }
+
+    /* ELEGANT */
+    .layout-elegant { color: #fff; }
+    .layout-elegant .card-name { font-size: 26px; font-weight: 300; letter-spacing: 1px; }
+    .layout-elegant .card-title { letter-spacing: 2px; font-size: 11px; text-transform: uppercase; }
+
+    /* BOLD */
+    .layout-bold { color: #fff; }
+    .layout-bold .card-name { font-size: 28px; font-weight: 900; text-transform: uppercase; letter-spacing: -1px; }
+    .layout-bold .card-title { font-weight: 700; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; }
+
+    /* SIMPLE */
+    .layout-simple { background: #f8f8f8 !important; color: #111; }
+    .layout-simple .card-title { color: #555; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="logo">vizzi<span>.</span></div>
-    <div class="tagline">digital business card</div>
-    <div id="content"><p class="loading">Loading...</p></div>
+    <div class="logo" id="logo-text">vizzi<span>.</span></div>
+    <div class="tagline" id="tagline">digital business card</div>
+    <div id="content"><p class="loading" style="color:#555">Loading...</p></div>
   </div>
 
   <script>
     const SUPABASE_URL = 'https://qpcukamntnlaqzvcfdxp.supabase.co';
     const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFwY3VrYW1udG5sYXF6dmNmZHhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTU5NDksImV4cCI6MjA4OTY3MTk0OX0.esegmcvGStbSX8TMTpQ3tHo3SQ-7tJ6iKle8ANHU6Mo';
 
-    const id = window.location.pathname.split('/card/')[1];
+    const pathParts = window.location.pathname.split('/card/');
+    const id = pathParts[1];
+
+    function getBgColor(layout, theme) {
+      if (layout === 'dark') return '#111';
+      if (layout === 'simple') return '#f8f8f8';
+      return theme || '#FF5C87';
+    }
+
+    function getTextColor(layout, theme) {
+      if (layout === 'minimal') return '#111';
+      if (layout === 'simple') return '#111';
+      return '#fff';
+    }
+
+    function setPageColors(layout, theme) {
+      const isDark = ['classic','dark','elegant','bold'].includes(layout);
+      document.body.style.background = isDark ? '#0a0a0a' : '#f5f5f5';
+      document.getElementById('logo-text').style.color = isDark ? '#fff' : '#111';
+      document.getElementById('tagline').style.color = isDark ? '#555' : '#888';
+    }
 
     async function loadCard() {
       if (!id) {
-        document.getElementById('content').innerHTML = '<p class="error">Card not found</p>';
+        document.getElementById('content').innerHTML = '<p style="color:#fff;font-size:18px">Card not found</p>';
         return;
       }
 
       const res = await fetch(`${SUPABASE_URL}/rest/v1/cards?id=eq.${id}&select=*`, {
-        headers: {
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`
-        }
+        headers: { 'apikey': SUPABASE_KEY, 'Authorization': `Bearer ${SUPABASE_KEY}` }
       });
 
       const data = await res.json();
       const card = data[0];
 
       if (!card) {
-        document.getElementById('content').innerHTML = '<p class="error">Card not found</p>';
+        document.getElementById('content').innerHTML = '<p style="color:#fff;font-size:18px">Card not found</p>';
         return;
       }
 
+      const layout = card.layout || 'classic';
+      const theme = card.theme || '#FF5C87';
+      const bgColor = getBgColor(layout, theme);
+      const textColor = getTextColor(layout, theme);
+
+      setPageColors(layout, theme);
+
+      const accentColor = layout === 'dark' ? theme : 'rgba(255,255,255,0.3)';
+      const infoColor = layout === 'minimal' || layout === 'simple' ? '#555' : 'rgba(255,255,255,0.85)';
+
       document.getElementById('content').innerHTML = `
-        <div class="card" style="background: ${card.theme || '#FF5C87'}">
+        <div class="card layout-${layout}" style="background:${bgColor}; color:${textColor}">
+          ${layout === 'dark' ? `<div class="card-accent" style="background:${theme}"></div>` : ''}
+          ${layout === 'bold' ? `<div style="position:absolute;right:-20px;top:-20px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.08)"></div>` : ''}
           <div class="card-name">${card.name || ''}</div>
-          <div class="card-title">${card.job_title || ''}</div>
-          ${card.phone ? `<div class="card-info">📞 ${card.phone}</div>` : ''}
-          ${card.email ? `<div class="card-info">✉️ ${card.email}</div>` : ''}
-          ${card.address ? `<div class="card-info">📍 ${card.address}</div>` : ''}
-          ${card.website ? `<div class="card-info">🌐 ${card.website}</div>` : ''}
-          ${card.instagram ? `<div class="card-info">📸 @${card.instagram}</div>` : ''}
-          ${card.whatsapp ? `<div class="card-info"><a href="https://wa.me/${card.whatsapp}" style="color:#fff">💬 WhatsApp</a></div>` : ''}
+          <div class="card-title" style="color:${layout === 'dark' ? 'rgba(255,255,255,0.6)' : layout === 'minimal' || layout === 'simple' ? '#888' : 'rgba(255,255,255,0.75)'}">${card.job_title || ''}</div>
+          <div class="divider"></div>
+          ${card.phone ? `<div class="card-info" style="color:${infoColor}">📞 <span>${card.phone}</span></div>` : ''}
+          ${card.email ? `<div class="card-info" style="color:${infoColor}">✉️ <span>${card.email}</span></div>` : ''}
+          ${card.address ? `<div class="card-info" style="color:${infoColor}">📍 <span>${card.address}</span></div>` : ''}
+          ${card.website ? `<div class="card-info" style="color:${infoColor}">🌐 <a href="${card.website}" style="color:${infoColor}">${card.website}</a></div>` : ''}
+          ${card.instagram ? `<div class="card-info" style="color:${infoColor}">📸 <a href="https://instagram.com/${card.instagram}" style="color:${infoColor}">@${card.instagram}</a></div>` : ''}
+          ${card.linkedin ? `<div class="card-info" style="color:${infoColor}">💼 <a href="${card.linkedin}" style="color:${infoColor}">${card.linkedin}</a></div>` : ''}
+          ${card.whatsapp ? `<div class="card-info" style="color:${infoColor}">💬 <a href="https://wa.me/${card.whatsapp}" style="color:${infoColor}">WhatsApp</a></div>` : ''}
+          ${card.tiktok ? `<div class="card-info" style="color:${infoColor}">🎵 <a href="https://tiktok.com/@${card.tiktok}" style="color:${infoColor}">@${card.tiktok}</a></div>` : ''}
         </div>
         <a class="btn btn-primary" href="vizzi://card/${id}">Open in Vizzi app</a>
-        <a class="btn btn-secondary" href="#">Get the Vizzi app</a>
+        <a class="btn btn-secondary" href="https://dancing-bavarois-5ae1b1.netlify.app">Get the Vizzi app</a>
       `;
     }
 
