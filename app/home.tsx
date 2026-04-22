@@ -32,6 +32,7 @@ export default function Home() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [locationDenied, setLocationDenied] = useState(false);
   const [locationAsked, setLocationAsked] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
   const cardColors = ['#FF5C87', '#3B82F6', '#10B981', '#FFBA00', '#A855F7', '#06b6d4'];
 
@@ -98,6 +99,8 @@ export default function Home() {
 
     const fullName = user.user_metadata?.full_name || 'there';
     setName(fullName.split(' ')[0]);
+    const { data: prof } = await supabase.from('profiles').select('avatar_url').eq('id', user.id).single();
+if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
 
     setLoadingCards(true);
     const { data: myCards } = await supabase
@@ -243,10 +246,14 @@ export default function Home() {
             <Text style={{ color: colors.text, fontSize: 22, fontWeight: 'bold', marginTop: 2 }}>{name}</Text>
           </View>
           <TouchableOpacity
-            onPress={() => router.push('/profile' as any)}
-            style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>{name.charAt(0)}</Text>
-          </TouchableOpacity>
+  onPress={() => router.push('/profile' as any)}
+  style={{ width: 38, height: 38, borderRadius: 19, overflow: 'hidden', backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
+  {avatarUrl ? (
+    <Image source={{ uri: avatarUrl }} style={{ width: 38, height: 38, borderRadius: 19 }} />
+  ) : (
+    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>{name.charAt(0)}</Text>
+  )}
+</TouchableOpacity>
         </View>
 
         {/* My cards */}
