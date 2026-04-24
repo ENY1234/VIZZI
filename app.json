@@ -11,7 +11,9 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.vizzi.app",
-      "associatedDomains": ["applinks:vizzi-jxy7krapt-eny1234s-projects.vercel.app"]
+      "associatedDomains": [
+        "applinks:vizzi-jxy7krapt-eny1234s-projects.vercel.app"
+      ]
     },
     "android": {
       "adaptiveIcon": {
@@ -34,7 +36,10 @@
               "pathPrefix": "/card"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -56,7 +61,8 @@
           }
         }
       ],
-      "expo-barcode-scanner"
+      "expo-barcode-scanner",
+      "expo-localization"
     ],
     "experiments": {
       "typedRoutes": true,

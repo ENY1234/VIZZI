@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Text, TouchableOpacity, View } from 'react-native';
+import { useLanguage } from '../context/LanguageContext';
 import { useTheme } from '../context/ThemeContext';
 
 type Props = {
@@ -10,13 +11,14 @@ type Props = {
 export default function BottomNav({ active }: Props) {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useLanguage();
 
   const tabs = [
-    { key: 'home', label: 'Home', icon: 'home-outline', activeIcon: 'home', route: '/home' },
-    { key: 'wallet', label: 'Wallet', icon: 'wallet-outline', activeIcon: 'wallet', route: '/wallet' },
+    { key: 'home', label: t.home, icon: 'home-outline', activeIcon: 'home', route: '/home' },
+    { key: 'wallet', label: t.wallet, icon: 'wallet-outline', activeIcon: 'wallet', route: '/wallet' },
     { key: 'create', label: '', icon: 'add', activeIcon: 'add', route: '/create' },
-    { key: 'scan', label: 'Scan', icon: 'qr-code-outline', activeIcon: 'qr-code', route: '/scan' },
-    { key: 'profile', label: 'Profile', icon: 'person-outline', activeIcon: 'person', route: '/profile' },
+    { key: 'scan', label: t.scan, icon: 'qr-code-outline', activeIcon: 'qr-code', route: '/scan' },
+    { key: 'profile', label: t.profile, icon: 'person-outline', activeIcon: 'person', route: '/profile' },
   ];
 
   return (

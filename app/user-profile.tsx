@@ -7,12 +7,14 @@ import { Image, Modal, ScrollView, Share, Text, TouchableOpacity, View } from 'r
 import QRCode from 'react-native-qrcode-svg';
 import CardPreview from './components/CardPreview';
 import SaveToGroupModal from './components/SaveToGroupModal';
+import { useLanguage } from './context/LanguageContext';
 import { useTheme } from './context/ThemeContext';
 import { supabase } from './supabase';
 
 export default function UserProfile() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useLanguage();
   const { userId } = useLocalSearchParams();
   const [profile, setProfile] = useState<any>(null);
   const [cards, setCards] = useState<any[]>([]);
@@ -76,7 +78,7 @@ export default function UserProfile() {
 
   if (loading) return (
     <View style={{ flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ color: colors.textMuted }}>Loading...</Text>
+      <Text style={{ color: colors.textMuted }}>{t.loading}</Text>
     </View>
   );
 
@@ -112,7 +114,7 @@ export default function UserProfile() {
         {/* Contact info from profile */}
         {(profile?.email) && (
           <View style={{ marginHorizontal: 24, marginBottom: 24, backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.border2, overflow: 'hidden' }}>
-            <Text style={{ color: colors.textMuted, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', padding: 16, paddingBottom: 8 }}>Contact</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', padding: 16, paddingBottom: 8 }}>{t.contact}</Text>
             {profile?.email && (
               <TouchableOpacity
                 onPress={() => handleContact('email', profile.email)}
@@ -130,19 +132,19 @@ export default function UserProfile() {
         <View style={{ flexDirection: 'row', marginHorizontal: 24, marginBottom: 28, gap: 10 }}>
           <View style={{ flex: 1, backgroundColor: colors.surface, borderRadius: 16, padding: 16, alignItems: 'center', borderWidth: 1, borderColor: colors.border2 }}>
             <Text style={{ color: colors.text, fontSize: 22, fontWeight: 'bold' }}>{cards.length}</Text>
-            <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 4 }}>Public cards</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 4 }}>{t.publicCards}</Text>
           </View>
         </View>
 
         {/* Cards */}
         <Text style={{ color: colors.textMuted, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', paddingHorizontal: 24, marginBottom: 16 }}>
-          Cards
+          {t.cards}
         </Text>
 
         {cards.length === 0 ? (
           <View style={{ alignItems: 'center', paddingVertical: 40 }}>
             <Ionicons name="card-outline" size={40} color={colors.textFaint} />
-            <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 12 }}>No public cards yet</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 13, marginTop: 12 }}>{t.noPublicCards}</Text>
           </View>
         ) : (
           cards.map((card) => {
@@ -196,7 +198,7 @@ export default function UserProfile() {
                       <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#25D36622', alignItems: 'center', justifyContent: 'center' }}>
                         <Ionicons name="logo-whatsapp" size={16} color="#25D366" />
                       </View>
-                      <Text style={{ color: colors.text, fontSize: 13, flex: 1 }}>WhatsApp</Text>
+                      <Text style={{ color: colors.text, fontSize: 13, flex: 1 }}>{t.whatsapp}</Text>
                       <Ionicons name="chevron-forward" size={14} color={colors.textFaint} />
                     </TouchableOpacity>
                   )}
@@ -218,7 +220,7 @@ export default function UserProfile() {
                       <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: '#0A66C222', alignItems: 'center', justifyContent: 'center' }}>
                         <Ionicons name="logo-linkedin" size={16} color="#0A66C2" />
                       </View>
-                      <Text style={{ color: colors.text, fontSize: 13, flex: 1 }}>LinkedIn</Text>
+                      <Text style={{ color: colors.text, fontSize: 13, flex: 1 }}>{t.linkedin}</Text>
                       <Ionicons name="chevron-forward" size={14} color={colors.textFaint} />
                     </TouchableOpacity>
                   )}
@@ -263,7 +265,7 @@ export default function UserProfile() {
                   <View style={{ backgroundColor: '#fff', padding: 12, borderRadius: 16 }}>
                     <QRCode value={cardLink} size={90} color="#111" backgroundColor="#fff" />
                   </View>
-                  <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 6 }}>Tap to expand QR</Text>
+                  <Text style={{ color: colors.textMuted, fontSize: 11, marginTop: 6 }}>{t.tapToExpandQr}</Text>
                 </TouchableOpacity>
 
                 {/* Action buttons */}
@@ -272,21 +274,21 @@ export default function UserProfile() {
                     onPress={() => handleShare(card.id, card.name)}
                     style={{ flex: 1, backgroundColor: colors.primary, padding: 12, borderRadius: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
                     <Ionicons name="share-outline" size={16} color="#fff" />
-                    <Text style={{ color: '#fff', fontWeight: '600', fontSize: 13 }}>Share</Text>
+                    <Text style={{ color: '#fff', fontWeight: '600', fontSize: 13 }}>{t.share}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => handleCopyLink(card.id)}
                     style={{ flex: 1, backgroundColor: colors.surface, padding: 12, borderRadius: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6, borderWidth: 1, borderColor: colors.border }}>
                     <Ionicons name={copied === card.id ? 'checkmark-outline' : 'link-outline'} size={16} color={copied === card.id ? colors.success : colors.textSecondary} />
                     <Text style={{ color: copied === card.id ? colors.success : colors.textSecondary, fontWeight: '600', fontSize: 13 }}>
-                      {copied === card.id ? 'Copied!' : 'Copy link'}
+                      {copied === card.id ? t.copied : t.copyLink}
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     onPress={() => { setSelectedCard(card); setShowSaveModal(true); }}
                     style={{ flex: 1, backgroundColor: colors.surface, padding: 12, borderRadius: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 6, borderWidth: 1, borderColor: colors.border }}>
                     <Ionicons name="people-outline" size={16} color={colors.textSecondary} />
-                    <Text style={{ color: colors.textSecondary, fontWeight: '600', fontSize: 13 }}>Save</Text>
+                    <Text style={{ color: colors.textSecondary, fontWeight: '600', fontSize: 13 }}>{t.save}</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -310,7 +312,7 @@ export default function UserProfile() {
               />
             )}
           </View>
-          <Text style={{ color: '#555', fontSize: 13, marginTop: 20 }}>Tap anywhere to close</Text>
+          <Text style={{ color: '#555', fontSize: 13, marginTop: 20 }}>{t.tapToClose}</Text>
         </TouchableOpacity>
       </Modal>
 

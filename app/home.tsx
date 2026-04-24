@@ -5,6 +5,7 @@ import { useCallback, useState } from 'react';
 import { Alert, Image, ScrollView, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import BottomNav from './components/BottomNav';
 import CardPreview from './components/CardPreview';
+import { useLanguage } from './context/LanguageContext';
 import { useTheme } from './context/ThemeContext';
 import { supabase } from './supabase';
 
@@ -23,6 +24,7 @@ function getDistanceKm(lat1: number, lon1: number, lat2: number, lon2: number) {
 export default function Home() {
   const router = useRouter();
   const { colors } = useTheme();
+  const { t } = useLanguage();
   const [name, setName] = useState('');
   const [cards, setCards] = useState<any[]>([]);
   const [search, setSearch] = useState('');
@@ -44,54 +46,54 @@ export default function Home() {
   );
 
   async function requestLocation() {
-  const { status: existing } = await Location.getForegroundPermissionsAsync();
-  if (existing === 'granted') {
-    const loc = await Location.getCurrentPositionAsync({});
-    const lat = loc.coords.latitude;
-    const lon = loc.coords.longitude;
-    setUserLocation({ lat, lon });
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase.from('profiles').update({ latitude: lat, longitude: lon }).eq('id', user.id);
+    const { status: existing } = await Location.getForegroundPermissionsAsync();
+    if (existing === 'granted') {
+      const loc = await Location.getCurrentPositionAsync({});
+      const lat = loc.coords.latitude;
+      const lon = loc.coords.longitude;
+      setUserLocation({ lat, lon });
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase.from('profiles').update({ latitude: lat, longitude: lon }).eq('id', user.id);
+      }
+      loadNearby(lat, lon);
+      return;
     }
-    loadNearby(lat, lon);
-    return;
-  }
 
-  if (!locationAsked) {
-    setLocationAsked(true);
-    Alert.alert(
-      'See people near you 📍',
-      'Allow Vizzi to use your location to show you people nearby.',
-      [
-        {
-          text: 'Not now',
-          style: 'cancel',
-          onPress: () => setLocationDenied(true),
-        },
-        {
-          text: 'Allow',
-          onPress: async () => {
-            const { status } = await Location.requestForegroundPermissionsAsync();
-            if (status !== 'granted') {
-              setLocationDenied(true);
-              return;
-            }
-            const loc = await Location.getCurrentPositionAsync({});
-            const lat = loc.coords.latitude;
-            const lon = loc.coords.longitude;
-            setUserLocation({ lat, lon });
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-              await supabase.from('profiles').update({ latitude: lat, longitude: lon }).eq('id', user.id);
-            }
-            loadNearby(lat, lon);
+    if (!locationAsked) {
+      setLocationAsked(true);
+      Alert.alert(
+        t.locationPromptTitle,
+        t.locationPromptMessage,
+        [
+          {
+            text: t.notNow,
+            style: 'cancel',
+            onPress: () => setLocationDenied(true),
           },
-        },
-      ]
-    );
+          {
+            text: t.allow,
+            onPress: async () => {
+              const { status } = await Location.requestForegroundPermissionsAsync();
+              if (status !== 'granted') {
+                setLocationDenied(true);
+                return;
+              }
+              const loc = await Location.getCurrentPositionAsync({});
+              const lat = loc.coords.latitude;
+              const lon = loc.coords.longitude;
+              setUserLocation({ lat, lon });
+              const { data: { user } } = await supabase.auth.getUser();
+              if (user) {
+                await supabase.from('profiles').update({ latitude: lat, longitude: lon }).eq('id', user.id);
+              }
+              loadNearby(lat, lon);
+            },
+          },
+        ]
+      );
+    }
   }
-}
 
   async function loadData() {
     const { data: { user } } = await supabase.auth.getUser();
@@ -100,7 +102,7 @@ export default function Home() {
     const fullName = user.user_metadata?.full_name || 'there';
     setName(fullName.split(' ')[0]);
     const { data: prof } = await supabase.from('profiles').select('avatar_url').eq('id', user.id).single();
-if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
+    if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
 
     setLoadingCards(true);
     const { data: myCards } = await supabase
@@ -111,14 +113,12 @@ if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
     if (myCards) setCards(myCards);
     setLoadingCards(false);
 
-    // Load popular users — ranked by how many times their cards were saved
     const { data: savedData } = await supabase
       .from('saved_cards')
       .select('card_id, cards(user_id)')
       .neq('user_id', user.id);
 
     if (savedData) {
-      // Count saves per user
       const saveCounts: Record<string, number> = {};
       savedData.forEach((sc: any) => {
         const uid = sc.cards?.user_id;
@@ -132,7 +132,6 @@ if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
         .slice(0, 10);
 
       if (sortedUserIds.length > 0) {
-        // Only show users with public cards
         const { data: publicCards } = await supabase
           .from('cards')
           .select('user_id')
@@ -147,7 +146,6 @@ if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
             .select('*')
             .in('id', publicUserIds);
           if (profiles) {
-            // Sort by save count
             const sorted = profiles.sort((a: any, b: any) =>
               (saveCounts[b.id] || 0) - (saveCounts[a.id] || 0)
             );
@@ -162,7 +160,6 @@ if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // Get all profiles with location
     const { data: profiles } = await supabase
       .from('profiles')
       .select('*')
@@ -172,7 +169,6 @@ if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
 
     if (!profiles) return;
 
-    // Get users with public cards
     const { data: publicCards } = await supabase
       .from('cards')
       .select('user_id')
@@ -180,7 +176,6 @@ if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
 
     const publicUserIds = new Set(publicCards?.map((c: any) => c.user_id) || []);
 
-    // Filter by distance (within 10km) and public cards
     const nearby = profiles
       .filter((p: any) => publicUserIds.has(p.id))
       .map((p: any) => ({
@@ -223,7 +218,7 @@ if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
         )}
         <View style={{ flex: 1 }}>
           <Text style={{ color: colors.text, fontSize: 12, fontWeight: '500' }}>{person.full_name}</Text>
-          <Text style={{ color: colors.textMuted, fontSize: 10, marginTop: 2 }}>{person.job_title || 'Vizzi user'}</Text>
+          <Text style={{ color: colors.textMuted, fontSize: 10, marginTop: 2 }}>{person.job_title || t.vizziUser}</Text>
         </View>
         {showDistance && person.distance != null && (
           <Text style={{ color: colors.textMuted, fontSize: 10, marginRight: 6 }}>
@@ -242,22 +237,22 @@ if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
         {/* Header */}
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 20, paddingTop: 60 }}>
           <View>
-            <Text style={{ color: colors.textMuted, fontSize: 12 }}>Good morning,</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 12 }}>{t.goodMorning}</Text>
             <Text style={{ color: colors.text, fontSize: 22, fontWeight: 'bold', marginTop: 2 }}>{name}</Text>
           </View>
           <TouchableOpacity
-  onPress={() => router.push('/profile' as any)}
-  style={{ width: 38, height: 38, borderRadius: 19, overflow: 'hidden', backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
-  {avatarUrl ? (
-    <Image source={{ uri: avatarUrl }} style={{ width: 38, height: 38, borderRadius: 19 }} />
-  ) : (
-    <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>{name.charAt(0)}</Text>
-  )}
-</TouchableOpacity>
+            onPress={() => router.push('/profile' as any)}
+            style={{ width: 38, height: 38, borderRadius: 19, overflow: 'hidden', backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center' }}>
+            {avatarUrl ? (
+              <Image source={{ uri: avatarUrl }} style={{ width: 38, height: 38, borderRadius: 19 }} />
+            ) : (
+              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 14 }}>{name.charAt(0)}</Text>
+            )}
+          </TouchableOpacity>
         </View>
 
         {/* My cards */}
-        <Text style={{ color: colors.textMuted, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', paddingHorizontal: 20, marginBottom: 10 }}>My cards</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', paddingHorizontal: 20, marginBottom: 10 }}>{t.myCards}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 12 }}>
           {loadingCards ? (
             [1, 2].map((i) => (
@@ -268,7 +263,7 @@ if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
               onPress={() => router.push('/create' as any)}
               style={{ width: 200, height: 96, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ color: colors.textFaint, fontSize: 24 }}>+</Text>
-              <Text style={{ color: colors.textFaint, fontSize: 9, marginTop: 4 }}>Create your first card</Text>
+              <Text style={{ color: colors.textFaint, fontSize: 9, marginTop: 4 }}>{t.createFirstCard}</Text>
             </TouchableOpacity>
           ) : (
             <>
@@ -297,18 +292,18 @@ if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
                 onPress={() => router.push('/create' as any)}
                 style={{ width: 80, height: 96, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: colors.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ color: colors.textFaint, fontSize: 24 }}>+</Text>
-                <Text style={{ color: colors.textFaint, fontSize: 9, marginTop: 4 }}>New</Text>
+                <Text style={{ color: colors.textFaint, fontSize: 9, marginTop: 4 }}>{t.newCard}</Text>
               </TouchableOpacity>
             </>
           )}
         </ScrollView>
 
         {/* Discover */}
-        <Text style={{ color: colors.textMuted, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', paddingHorizontal: 20, marginTop: 24, marginBottom: 10 }}>Discover</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', paddingHorizontal: 20, marginTop: 24, marginBottom: 10 }}>{t.discover}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, marginHorizontal: 20, paddingHorizontal: 12, marginBottom: 20 }}>
           <Ionicons name="search-outline" size={16} color={colors.textFaint} />
           <TextInput
-            placeholder="Search by name or job title..."
+            placeholder={t.searchPlaceholder}
             placeholderTextColor={colors.textFaint}
             value={search}
             onChangeText={setSearch}
@@ -320,7 +315,7 @@ if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
           <>
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginBottom: 8 }}>
               <Ionicons name="flame-outline" size={13} color={colors.primary} />
-              <Text style={{ color: colors.textMuted, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', marginLeft: 5 }}>Popular</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', marginLeft: 5 }}>{t.popular}</Text>
             </View>
             {filteredPopular.map((person, index) => (
               <UserRow key={person.id} person={person} index={index} />
@@ -333,7 +328,7 @@ if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
           <>
             <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, marginTop: filteredPopular.length > 0 ? 16 : 0, marginBottom: 8 }}>
               <Ionicons name="location-outline" size={13} color={colors.primary} />
-              <Text style={{ color: colors.textMuted, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', marginLeft: 5 }}>Near me</Text>
+              <Text style={{ color: colors.textMuted, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase', marginLeft: 5 }}>{t.nearMe}</Text>
             </View>
             {filteredNearby.length > 0 ? (
               filteredNearby.map((person, index) => (
@@ -341,7 +336,7 @@ if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
               ))
             ) : (
               <Text style={{ color: colors.textMuted, fontSize: 12, paddingHorizontal: 20, textAlign: 'center', marginTop: 8 }}>
-                No one nearby yet
+                {t.noOneNearby}
               </Text>
             )}
           </>
@@ -349,7 +344,7 @@ if (prof?.avatar_url) setAvatarUrl(prof.avatar_url);
 
         {locationDenied && filteredPopular.length === 0 && (
           <Text style={{ color: colors.textMuted, fontSize: 12, paddingHorizontal: 20, marginTop: 8, textAlign: 'center' }}>
-            No users found
+            {t.noUsersFound}
           </Text>
         )}
 
